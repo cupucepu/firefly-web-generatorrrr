@@ -3,61 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generator Gambar Firefly</title>
+    <title>Firefly Generator Pro</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center; background-color: #f4f4f4; }
-        h1 { color: #333; }
-        input { width: 80%; padding: 15px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; }
-        button { padding: 15px 30px; background-color: #ff4500; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 10px; }
-        button:hover { background-color: #e03e00; }
-        #result { margin-top: 20px; }
-        img { max-width: 100%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .loading { color: #666; font-style: italic; display: none; }
+        body { background-color: #121212; color: white; font-family: sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 800px; }
+        
+        /* GAYA MENU ASPECT RATIO */
+        .controls { background: #1e1e1e; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #333; display: flex; gap: 10px; flex-wrap: wrap; }
+        select, input, button { padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 14px; }
+        input { flex-grow: 1; }
+        button { background: #ff4500; border: none; font-weight: bold; cursor: pointer; }
+        button:hover { background: #ff5722; }
+        
+        /* HASIL GAMBAR */
+        #result { margin-top: 20px; text-align: center; }
+        img { max-width: 100%; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .loading { display: none; color: #aaa; }
     </style>
 </head>
 <body>
-    <h1>🎨 Firefly Generator</h1>
-    <p>Ketik imajinasimu di bawah ini:</p>
-    
-    <input type="text" id="prompt" placeholder="Contoh: Kucing astronot makan pizza...">
-    <br>
-    <button onclick="generate()">Buat Gambar</button>
-    
-    <div class="loading" id="loading">Sedang memproses... Tunggu ya...</div>
-    <div id="result"></div>
 
-    <script>
-        async function generate() {
-            const prompt = document.getElementById('prompt').value;
-            const resultDiv = document.getElementById('result');
-            const loadingDiv = document.getElementById('loading');
+<div class="container">
+    <h2 style="text-align:center">🔥 Firefly Stock Generator</h2>
+
+    <div class="controls">
+        <select id="ratio">
+            <option value="square">Square (1:1) - IG Feed</option>
+            <option value="landscape">Landscape (16:9) - Desktop/Youtube</option>
+            <option value="portrait">Portrait (9:16) - Tiktok/Reels</option>
+            <option value="widescreen">Ultra Wide (21:9) - Cinematic</option>
+        </select>
+        
+        <select id="type">
+            <option value="photo">📷 Foto Realistis</option>
+            <option value="art">🎨 Digital Art</option>
+        </select>
+    </div>
+
+    <div class="controls">
+        <input type="text" id="prompt" placeholder="Masukkan ide gambarmu di sini...">
+        <button onclick="generate()">GENERATE SEKARANG 🚀</button>
+    </div>
+
+    <div id="result">
+        <div class="loading" id="loader">Sedang memproses... Tunggu ya bos!</div>
+        <img id="image" src="" style="display:none">
+    </div>
+</div>
+
+<script>
+    async function generate() {
+        const prompt = document.getElementById('prompt').value;
+        const ratio = document.getElementById('ratio').value;
+        const type = document.getElementById('type').value;
+        
+        if(!prompt) return alert("Isi dulu prompt-nya bos!");
+
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('image').style.display = 'none';
+
+        try {
+            const res = await fetch('/api/generate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ text: prompt, ratio: ratio, type: type })
+            });
             
-            if(!prompt) return alert("Isi teks dulu dong!");
-
-            resultDiv.innerHTML = "";
-            loadingDiv.style.display = "block";
-
-            try {
-                // Panggil 'Otak' di server (API Route)
-                const response = await fetch('/api/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: prompt })
-                });
-                
-                const data = await response.json();
-                
-                if(data.url) {
-                    resultDiv.innerHTML = `<img src="${data.url}" alt="Hasil Gambar"><br><p>Klik kanan gambar untuk Simpan</p>`;
-                } else {
-                    resultDiv.innerText = "Gagal: " + (data.error || "Unknown error");
-                }
-            } catch (e) {
-                resultDiv.innerText = "Error koneksi!";
-            } finally {
-                loadingDiv.style.display = "none";
+            const data = await res.json();
+            if(data.url) {
+                document.getElementById('image').src = data.url;
+                document.getElementById('image').style.display = 'block';
+            } else {
+                alert("Gagal: " + (data.error || "Unknown error"));
             }
+        } catch(e) {
+            alert("Error koneksi");
+        } finally {
+            document.getElementById('loader').style.display = 'none';
         }
-    </script>
+    }
+</script>
+
 </body>
 </html>
