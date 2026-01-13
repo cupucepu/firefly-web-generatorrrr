@@ -3,86 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firefly Generator Pro</title>
+    <title>Firefly Stock Studio</title>
     <style>
-        body { background-color: #121212; color: white; font-family: sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 800px; }
+        :root { --bg: #0f172a; --panel: #1e293b; --accent: #6366f1; --text: #f1f5f9; --border: #334155; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
         
-        /* GAYA MENU ASPECT RATIO */
-        .controls { background: #1e1e1e; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #333; display: flex; gap: 10px; flex-wrap: wrap; }
-        select, input, button { padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 14px; }
-        input { flex-grow: 1; }
-        button { background: #ff4500; border: none; font-weight: bold; cursor: pointer; }
-        button:hover { background: #ff5722; }
+        /* SIDEBAR */
+        .sidebar { width: 320px; background: var(--panel); border-right: 1px solid var(--border); padding: 25px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+        .main { flex: 1; display: flex; flex-direction: column; padding: 0; position: relative; }
         
-        /* HASIL GAMBAR */
-        #result { margin-top: 20px; text-align: center; }
-        img { max-width: 100%; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .loading { display: none; color: #aaa; }
+        h2 { margin: 0 0 10px 0; font-size: 1.2rem; color: #94a3b8; }
+        label { display: block; margin-bottom: 8px; font-size: 0.75rem; font-weight: 700; color: #cbd5e1; letter-spacing: 0.5px; text-transform: uppercase; }
+        
+        /* INPUT KHUSUS TOKEN */
+        .token-box {
+            width: 100%; padding: 10px; background: #0f172a; border: 1px solid #ef4444; 
+            color: #fca5a5; border-radius: 8px; font-size: 0.8rem; outline: none; margin-bottom: 5px;
+        }
+        .token-box:focus { border-color: #f87171; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2); }
+
+        /* CONTROLS */
+        .control-box { background: #0f172a; padding: 4px; border-radius: 8px; border: 1px solid var(--border); display: flex; gap: 5px; }
+        .ratio-btn { flex: 1; background: transparent; border: none; color: #64748b; padding: 10px; cursor: pointer; border-radius: 6px; transition: 0.2s; font-size: 0.8rem; }
+        .ratio-btn:hover { background: rgba(255,255,255,0.05); color: white; }
+        .ratio-btn.active { background: var(--accent); color: white; font-weight: bold; }
+        select { width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 8px; outline: none; }
+        
+        /* PREVIEW AREA */
+        .preview-area { flex: 1; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); overflow: hidden; padding: 40px; }
+        img { max-width: 100%; max-height: 100%; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: none; }
+        
+        /* PROMPT BAR */
+        .prompt-container { padding: 20px; background: var(--panel); border-top: 1px solid var(--border); display: flex; gap: 15px; align-items: center; }
+        input[type="text"] { flex: 1; padding: 16px; background: #0f172a; border: 1px solid var(--border); border-radius: 10px; color: white; font-size: 1rem; outline: none; }
+        button.gen-btn { padding: 16px 32px; background: var(--accent); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+        button.gen-btn:hover { background: #4f46e5; }
+
+        .loader { display: none; color: var(--accent); font-weight: bold; background: rgba(15,23,42,0.9); padding: 10px 20px; border-radius: 20px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2 style="text-align:center">🔥 Firefly Stock Generator</h2>
+    <div class="sidebar">
+        <div style="margin-bottom: 10px;">
+            <h1 style="font-size: 1.5rem; margin:0;">🔥 Firefly<span style="color:var(--accent)">Pro</span></h1>
+        </div>
 
-    <div class="controls">
-        <select id="ratio">
-            <option value="square">Square (1:1) - IG Feed</option>
-            <option value="landscape">Landscape (16:9) - Desktop/Youtube</option>
-            <option value="portrait">Portrait (9:16) - Tiktok/Reels</option>
-            <option value="widescreen">Ultra Wide (21:9) - Cinematic</option>
-        </select>
-        
-        <select id="type">
-            <option value="photo">📷 Foto Realistis</option>
-            <option value="art">🎨 Digital Art</option>
-        </select>
+        <div style="background: rgba(239, 68, 68, 0.1); padding: 15px; border-radius: 10px; border: 1px solid rgba(239, 68, 68, 0.2);">
+            <label style="color: #f87171;">Paste Token Di Sini 👇</label>
+            <input type="text" id="userToken" class="token-box" placeholder="eyJhbGciOi..." oninput="saveToken()">
+            <div style="font-size: 0.7rem; color: #fca5a5; margin-top:5px;">*Token otomatis disimpan di browser.</div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border); width: 100%;">
+
+        <div>
+            <label>ASPECT RATIO</label>
+            <div class="control-box">
+                <button class="ratio-btn" onclick="setRatio(this, 'square')">1:1</button>
+                <button class="ratio-btn active" onclick="setRatio(this, 'landscape')">16:9</button>
+                <button class="ratio-btn" onclick="setRatio(this, 'portrait')">9:16</button>
+            </div>
+            <input type="hidden" id="ratioInput" value="landscape">
+        </div>
+
+        <div>
+            <label>CONTENT TYPE</label>
+            <select id="typeInput">
+                <option value="photo">📷 Photo (Realistis)</option>
+                <option value="art">🎨 Art (Digital Art)</option>
+            </select>
+        </div>
     </div>
 
-    <div class="controls">
-        <input type="text" id="prompt" placeholder="Masukkan ide gambarmu di sini...">
-        <button onclick="generate()">GENERATE SEKARANG 🚀</button>
+    <div class="main">
+        <div class="preview-area">
+            <div class="loader" id="loader">⚡ Mengolah Pixel...</div>
+            <img id="resultImage" src="" alt="Hasil AI">
+        </div>
+
+        <div class="prompt-container">
+            <input type="text" id="prompt" placeholder="Ketik prompt gambar di sini..." onkeypress="if(event.key==='Enter') generate()">
+            <button class="gen-btn" onclick="generate()">GENERATE ✨</button>
+        </div>
     </div>
 
-    <div id="result">
-        <div class="loading" id="loader">Sedang memproses... Tunggu ya bos!</div>
-        <img id="image" src="" style="display:none">
-    </div>
-</div>
-
-<script>
-    async function generate() {
-        const prompt = document.getElementById('prompt').value;
-        const ratio = document.getElementById('ratio').value;
-        const type = document.getElementById('type').value;
-        
-        if(!prompt) return alert("Isi dulu prompt-nya bos!");
-
-        document.getElementById('loader').style.display = 'block';
-        document.getElementById('image').style.display = 'none';
-
-        try {
-            const res = await fetch('/api/generate', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ text: prompt, ratio: ratio, type: type })
-            });
-            
-            const data = await res.json();
-            if(data.url) {
-                document.getElementById('image').src = data.url;
-                document.getElementById('image').style.display = 'block';
-            } else {
-                alert("Gagal: " + (data.error || "Unknown error"));
-            }
-        } catch(e) {
-            alert("Error koneksi");
-        } finally {
-            document.getElementById('loader').style.display = 'none';
-        }
-    }
-</script>
-
-</body>
-</html>
+    <script>
